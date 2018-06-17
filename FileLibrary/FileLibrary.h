@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include <iostream>
 #include <vector>
@@ -91,10 +90,10 @@ namespace FileLibrary
 		bool saveToKeyValueFile(std::vector<std::pair<std::string, std::string>> fileKeyValueStorage);
 
 		//! @Returns an object with normal format of the file
-		const Format& determineFileFormat(const std::vector<std::string>& fileData, bool isLoaded);
+		const Format& determineFileFormat(const std::vector<std::string>& fileData);
 
 		//! Load all data from file to vector of the pair strings 
-		void loadDataFromFile(const std::vector<std::string>& fileData);
+		void loadDataFromKeyValueFile(const std::vector<std::string>& fileData);
 
 		//! @Returns the error flag
 		bool errorOccured();
@@ -102,10 +101,10 @@ namespace FileLibrary
 		//! Assigns the error flag to a false
 		void cleanErrorFlag();
 
-		//! Clears current data of the file
+		//! Returns true if the file is clear
 		bool isClear();
 
-		//! Returns true if the file is clear
+		//! Clears current data of the file
 		void clear();
 
 		//

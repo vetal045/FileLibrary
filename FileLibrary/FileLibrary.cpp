@@ -6,27 +6,14 @@
 #include <algorithm>
 #include <list>
 
-namespace FileLibrary
+namespace FileLibrary 
 {
-	File::File()
-	{
-		isError_ = false;
-		isLoaded_ = false;
-		fileFormat_ = Format::KeyValue;
-	}
+	File::File() : isError_(false), isLoaded_(false), fileFormat_(Format::KeyValue) 
+	{ }
 
-	File::File(const std::string & filePath)
+	File::File(const std::string & filePath) : isError_(false), isLoaded_ (false), fileFormat_ (Format::KeyValue), filePath_ (filePath)
 	{
-		isError_ = false;
-		isLoaded_ = false;
-		fileFormat_ = Format::KeyValue;
-		filePath_ = filePath;
-
-		if (std::ifstream(filePath_))
-		{
-			std::cout << "File already exists" << std::endl;
-			load(filePath_);
-		}
+		load(filePath_);
 	}
 
 	void File::add(const std::string & key, const std::string & value)
@@ -124,12 +111,12 @@ namespace FileLibrary
 			fileData.push_back(strFile);
 		}
 
-		fileFormat_ = determineFileFormat(fileData, isLoaded_);
+		fileFormat_ = determineFileFormat(fileData);
 
 		if (fileFormat_ == Format::KeyValue)
 		{
 			//setFilePath(filePath);
-			loadDataFromFile(fileData);
+			loadDataFromKeyValueFile(fileData);
 
 			return true;
 		}
@@ -219,32 +206,34 @@ namespace FileLibrary
 		size_t foundSpace;
 		std::string key;
 
-		//Checks that key contains spaces or not and strings of file contains symbol '=' or not
 		for (const auto& i : fileData)
 		{
 			foundAssign = i.find('=');
 
-			if (foundAssign != std::string::npos)
+			if (foundAssign == std::string::npos)
 			{
-				key = i.substr(0, foundAssign);
+				return false;
+			}
+		}
 
-				if (((foundSpace = key.find(' ')) == std::string::npos) ? true : false)
+		for (const auto& i : fileData)
+		{
+			foundAssign = i.find('=');
+
+			key = i.substr(0, foundAssign);
+
+			if ((foundSpace = key.find(' ')) == std::string::npos)
+			{
+				if (i == fileData.back())
 				{
-					if (i == fileData.back())
-					{
-						return true;
-					}
-				}
-				else
-				{
-					return false;
+					return true;
 				}
 			}
 			else
 			{
 				return false;
 			}
-		}
+		}	
 
 		return false;
 	}
@@ -271,7 +260,7 @@ namespace FileLibrary
 		return true;
 	}
 
-	const Format& File::determineFileFormat(const std::vector<std::string>& fileData, bool isLoaded)
+	const Format& File::determineFileFormat(const std::vector<std::string>& fileData)
 	{
 		Format a;
 
@@ -281,7 +270,7 @@ namespace FileLibrary
 		}
 		else
 		{
-			if (isLoaded == false)
+			if (isLoaded_ == false)
 			{
 				a = Format::NotLoaded;
 			}
@@ -294,7 +283,7 @@ namespace FileLibrary
 		return a;
 	}
 
-	void File::loadDataFromFile(const std::vector<std::string>& fileData)
+	void File::loadDataFromKeyValueFile(const std::vector<std::string>& fileData)
 	{
 		int foundAssign, foundSpace;
 		std::string key, value;
@@ -329,18 +318,20 @@ namespace FileLibrary
 			isError_ = true;
 			throw(std::logic_error("The file " + filePath_ + " is an empty."));
 		}
-
-		std::cout << "===========================================" << std::endl;;
-		std::cout << "The file " + filePath_ + " contains: " << std::endl;
-
-		int numb = 0;
-		for (const auto& i : fileKeyValueStorage_)
+		else
 		{
-			++numb;
-			std::cout << numb << ". Key: " << i.first << ", value: " << i.second << std::endl;
-		}
+			std::cout << "===========================================" << std::endl;;
+			std::cout << "The file " + filePath_ + " contains: " << std::endl;
 
-		std::cout << "===========================================" << std::endl;;
+			int numb = 0;
+			for (const auto& i : fileKeyValueStorage_)
+			{
+				++numb;
+				std::cout << numb << ". Key: " << i.first << ", value: " << i.second << std::endl;
+			}
+
+			std::cout << "===========================================" << std::endl;
+		}
 	}
 
 	bool File::errorOccured()
