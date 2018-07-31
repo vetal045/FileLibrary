@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <map>
 
 //
 // Declaration of the namespace FilesFormalLib.
@@ -51,12 +52,9 @@ namespace FileLibrary
 		//! Deletes the string from file by specified value
 		void deleteByValue(const std::string& value);
 
-		//! Deletes the string from file using both parameters
-		void deleteKeyValue(const std::string& key, const std::string& value);
-
 		//! Loads an file from a given file path
 		//! @Returns true if the file was successfully loaded and contained normal format of data
-		bool load(std::string filePath);
+		bool load(const std::string& filePath);
 
 		//! @Returns true if the file was successfully loaded and contained normal format of data
 		bool load();
@@ -75,7 +73,19 @@ namespace FileLibrary
 		long long getFileSize();
 
 		//! Prints content of the file
-		void print();
+		void print(std::ostream& os);
+
+		//! Clears current data of the file
+		void clear();
+
+		//! Changes value by key
+		void set(const std::string& key, const std::string& value);
+
+		//! Returns certain note by key
+		std::string get(const std::string& key);
+
+		//! Returns the true if file contains the note by specified key
+		bool contains(const std::string& key);
 
 		//
 		// Private methods.
@@ -87,7 +97,7 @@ namespace FileLibrary
 		bool formatKeyValue(const std::vector<std::string>& fileData);
 
 		//! Saves data to KeyValue format of the file
-		bool saveToKeyValueFile(std::vector<std::pair<std::string, std::string>> fileKeyValueStorage);
+		bool saveToKeyValueFile(const std::map<std::string, std::string>& fileKeyValueStorage);
 
 		//! @Returns an object with normal format of the file
 		const Format& determineFileFormat(const std::vector<std::string>& fileData);
@@ -104,8 +114,8 @@ namespace FileLibrary
 		//! Returns true if the file is clear
 		bool isClear();
 
-		//! Clears current data of the file
-		void clear();
+		//! Defines the size of current file
+		long long defineFileSize(std::ifstream& file);
 
 		//
 		// Private data members.
@@ -113,9 +123,10 @@ namespace FileLibrary
 
 	private:
 		std::string filePath_;
+		int fileSize_;
 		bool isError_;
-		bool isLoaded_;
 		Format fileFormat_;
-		std::vector<std::pair<std::string, std::string>> fileKeyValueStorage_;
+		//std::vector<std::pair<std::string, std::string>> fileKeyValueStorage_;
+		std::map<std::string, std::string> fileKeyValueStorage_;
 	};
 }

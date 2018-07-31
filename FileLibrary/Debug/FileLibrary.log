@@ -1,3 +1,4 @@
 ﻿  FileLibrary.cpp
-c:\users\виталий\documents\visual studio 2015\projects\staticfilelibrary\filelibrary\filelibrary.cpp(283): warning C4172: возвращение адреса локальной или временной переменной : a
+c:\users\виталий\documents\visual studio 2015\projects\staticfilelibrary\filelibrary\filelibrary.cpp(72): warning C4244: =: преобразование "__int64" в "int", возможна потеря данных
+c:\users\виталий\documents\visual studio 2015\projects\staticfilelibrary\filelibrary\filelibrary.cpp(215): warning C4172: возвращение адреса локальной или временной переменной : a
   FileLibrary.vcxproj -> C:\Users\Виталий\Documents\Visual Studio 2015\Projects\StaticFileLibrary\Debug\FileLibrary.lib

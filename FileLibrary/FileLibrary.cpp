@@ -8,21 +8,21 @@
 
 namespace FileLibrary 
 {
-	File::File() : isError_(false), isLoaded_(false), fileFormat_(Format::KeyValue) 
+	File::File() : isError_(false), fileFormat_(Format::KeyValue), fileSize_(0)
 	{ }
 
-	File::File(const std::string & filePath) : isError_(false), isLoaded_ (false), fileFormat_ (Format::KeyValue), filePath_ (filePath)
+	File::File(const std::string & filePath) : isError_(false),  
+		fileFormat_ (Format::KeyValue), filePath_ (filePath), fileSize_(0)
 	{
 		load(filePath_);
 	}
 
 	void File::add(const std::string & key, const std::string & value)
 	{
-		size_t foundSpace;
-
-		if ((foundSpace = key.find(' ')) == std::string::npos) //if key doesn't contain
+		if (key.find(' ') == std::string::npos) //if key doesn't contain
 		{
-			fileKeyValueStorage_.push_back(std::make_pair(key, value));
+			//fileKeyValueStorage_.push_back(std::make_pair(key, value));
+			fileKeyValueStorage_.insert(std::pair<std::string, std::string>(key, value));
 		}
 		else
 		{
@@ -32,71 +32,44 @@ namespace FileLibrary
 
 	void File::deleteByKey(const std::string & key)
 	{
-		int count = 0;
+		std::map<std::string, std::string>::iterator it = fileKeyValueStorage_.find(key);
 
-		for (const auto& i : fileKeyValueStorage_)
-		{
-			if (i.first == key)
-			{
-				fileKeyValueStorage_.erase(fileKeyValueStorage_.begin() + count);
-				break;
-			}
-			else
-			{
-				++count;
-			}
-		}
+		fileKeyValueStorage_.erase(it);
 	}
 
 	void File::deleteByValue(const std::string & value)
 	{
-		int count = 0;
+		std::map<std::string, std::string>::iterator it = fileKeyValueStorage_.begin();
 
 		for (const auto& i : fileKeyValueStorage_)
 		{
 			if (i.second == value)
 			{
-				fileKeyValueStorage_.erase(fileKeyValueStorage_.begin() + count);
+				fileKeyValueStorage_.erase(it);
 				break;
 			}
 			else
 			{
-				++count;
+				++it;
 			}
 		}
 	}
 
-	void File::deleteKeyValue(const std::string & key, const std::string & value)
-	{
-		int count = 0;
 
-		for (const auto& i : fileKeyValueStorage_)
-		{
-			if (i.first == key && i.second == value)
-			{
-				fileKeyValueStorage_.erase(fileKeyValueStorage_.begin() + count);
-				break;
-			}
-			else
-			{
-				++count;
-			}
-		}
-	}
-
-	bool File::load(std::string filePath)
+	bool File::load(const std::string& filePath)
 	{
 		std::ifstream file(filePath, std::ios::in);
 		std::vector<std::string> fileData;
 		std::string strFile;
-		isLoaded_ = true;
 
 		if (!file.is_open() || !file.good())
 		{
 			isError_ = true;
-			isLoaded_ = false;
+			fileFormat_ = Format::NotLoaded;
 			throw(std::runtime_error("Doesn't exist or can't open file " + filePath + "."));
 		}
+
+		fileSize_ = defineFileSize(file);
 
 		/*if (filePath_ == getFilePath())
 		{
@@ -135,7 +108,7 @@ namespace FileLibrary
 	bool File::load()
 	{
 		// Check that filename is specified
-		if (!filePath_.length())
+		if (filePath_.empty())
 		{
 			isError_ = true;
 			throw(std::logic_error("No file path specified."));
@@ -146,10 +119,6 @@ namespace FileLibrary
 
 	bool File::save()
 	{
-		/*if (isLoaded_ == false)
-		{
-		fileFormat_ = Format::KeyValue;
-		}*/
 
 		if (fileFormat_ == Format::KeyValue)
 		{
@@ -173,37 +142,12 @@ namespace FileLibrary
 
 	long long File::getFileSize()
 	{
-		// Check that filename is specified
-		if (!filePath_.length())
-		{
-			isError_ = true;
-			throw(std::logic_error("No file path specified."));
-		}
-
-		std::ifstream file(filePath_, std::ios::in);
-
-		if (!file.is_open() || !file.good())
-		{
-			isError_ = true;
-			throw(std::runtime_error("Doesn't exist or can't open file path " + filePath_ + "."));
-		}
-
-		std::streampos fileSize = file.tellg(); // The file pointer is currently at the beginning   
-
-		file.seekg(0, std::ios::end);			  // Place the file pointer at the end of file
-
-		fileSize = file.tellg() - fileSize;
-		file.close();
-
-		static_assert(sizeof(fileSize) >= sizeof(long long), "Size of the file is too big. Is is impossible to handle that file with path.");
-
-		return fileSize;
+		return fileSize_;
 	}
 
 	bool File::formatKeyValue(const std::vector<std::string>& fileData)
 	{
 		int foundAssign;
-		size_t foundSpace;
 		std::string key;
 
 		for (const auto& i : fileData)
@@ -214,31 +158,19 @@ namespace FileLibrary
 			{
 				return false;
 			}
-		}
-
-		for (const auto& i : fileData)
-		{
-			foundAssign = i.find('=');
 
 			key = i.substr(0, foundAssign);
 
-			if ((foundSpace = key.find(' ')) == std::string::npos)
-			{
-				if (i == fileData.back())
-				{
-					return true;
-				}
-			}
-			else
+			if (key.find(' ') != std::string::npos)
 			{
 				return false;
 			}
-		}	
+		}
 
-		return false;
+		return true;
 	}
 
-	bool File::saveToKeyValueFile(std::vector<std::pair<std::string, std::string>> fileKeyValueStorage)
+	bool File::saveToKeyValueFile(const std::map<std::string, std::string>& fileKeyValueStorage)
 	{
 		std::ofstream file;
 
@@ -270,9 +202,9 @@ namespace FileLibrary
 		}
 		else
 		{
-			if (isLoaded_ == false)
+			if (fileFormat_ == Format::NotLoaded)
 			{
-				a = Format::NotLoaded;
+				return fileFormat_;
 			}
 			else
 			{
@@ -305,32 +237,32 @@ namespace FileLibrary
 				{
 					value = i.substr(foundAssign + 1);
 
-					fileKeyValueStorage_.push_back(std::make_pair(key, value));
+					fileKeyValueStorage_.insert(std::pair<std::string, std::string>(key, value));
 				}
 			}
 		}
 	}
 
-	void File::print()
+	void File::print(std::ostream& os)
 	{
 		if (fileKeyValueStorage_.empty() == true)
 		{
 			isError_ = true;
-			throw(std::logic_error("The file " + filePath_ + " is an empty."));
+			os<< "The file " + filePath_ + " is an empty.";
 		}
 		else
 		{
-			std::cout << "===========================================" << std::endl;;
-			std::cout << "The file " + filePath_ + " contains: " << std::endl;
+			os << "===========================================" << std::endl;;
+			os << "The file " + filePath_ + " contains: " << std::endl;
 
 			int numb = 0;
 			for (const auto& i : fileKeyValueStorage_)
 			{
 				++numb;
-				std::cout << numb << ". Key: " << i.first << ", value: " << i.second << std::endl;
+				os << numb << ". Key: " << i.first << ", value: " << i.second << std::endl;
 			}
-
-			std::cout << "===========================================" << std::endl;
+			
+			os << "===========================================" << std::endl;
 		}
 	}
 
@@ -346,12 +278,21 @@ namespace FileLibrary
 
 	bool File::isClear()
 	{
-		if (fileKeyValueStorage_.empty() == true)
-		{
-			return true;
-		}
+		return fileKeyValueStorage_.empty();
+	}
 
-		return false;
+	long long File::defineFileSize(std::ifstream & file)
+	{
+		std::streampos fileSize = file.tellg(); // The file pointer is currently at the beginning   
+
+		file.seekg(0, std::ios::end);			  // Place the file pointer at the end of file
+
+		fileSize = file.tellg() - fileSize;
+		file.close();
+
+		static_assert(sizeof(fileSize) >= sizeof(long long), "Size of the file is too big. Is is impossible to handle that file with path.");
+
+		return fileSize;
 	}
 
 	void File::clear()
@@ -359,6 +300,44 @@ namespace FileLibrary
 		if (fileKeyValueStorage_.empty() == false)
 		{
 			fileKeyValueStorage_.clear();
+		}
+	}
+
+	void File::set(const std::string & key, const std::string& value)
+	{
+		std::map<std::string, std::string>::iterator it = fileKeyValueStorage_.find(key);
+
+		if (it != fileKeyValueStorage_.end())
+			it->second = value;
+	}
+
+	std::string File::get(const std::string & key)
+	{
+		std::string value;
+
+		for (const auto& i : fileKeyValueStorage_)
+		{
+			if (i.first == key)
+			{
+				value = i.second;
+				break;
+			}
+		}
+
+		return value;
+	}
+
+	bool File::contains(const std::string & key)
+	{
+		std::map<std::string, std::string>::iterator it = fileKeyValueStorage_.find(key);
+
+		if (it == fileKeyValueStorage_.end())
+		{
+			return false;
+		}
+		else
+		{
+			return true;
 		}
 	}
 }
