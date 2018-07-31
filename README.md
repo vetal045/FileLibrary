@@ -81,13 +81,20 @@ f.save();
 
 f.print();
 
+# Change the value by a key
+f.set("qwerty","654321");
+
+# Get value by a key
+f.get("qwerty");
+
+# Check if file containes note with specified key (result is true or false)
+f.contains("qwerty");
+
 # Delete any string from data of file
 
 f.deleteByKey("qwerty"); //using key
 
 f.deleteByValue("123456"); //using value
-
-f.deleteKeyValue("qwerty","123456"); //using both
 
 # Set file path
 
